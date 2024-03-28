@@ -1,4 +1,5 @@
 """View module for handling requests about customer order"""
+
 import datetime
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
@@ -11,18 +12,18 @@ from .product import ProductSerializer
 
 
 class OrderLineItemSerializer(serializers.HyperlinkedModelSerializer):
-    """JSON serializer for line items """
+    """JSON serializer for line items"""
 
     product = ProductSerializer(many=False)
 
     class Meta:
         model = OrderProduct
         url = serializers.HyperlinkedIdentityField(
-            view_name='lineitem',
-            lookup_field='id'
+            view_name="lineitem", lookup_field="id"
         )
-        fields = ('id', 'product')
+        fields = ("id", "product")
         depth = 1
+
 
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for customer orders"""
@@ -31,11 +32,8 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Order
-        url = serializers.HyperlinkedIdentityField(
-            view_name='order',
-            lookup_field='id'
-        )
-        fields = ('id', 'url', 'created_date', 'payment_type', 'customer', 'lineitems')
+        url = serializers.HyperlinkedIdentityField(view_name="order", lookup_field="id")
+        fields = ("id", "url", "created_date", "payment_type", "customer", "lineitems")
 
 
 class Orders(ViewSet):
@@ -70,13 +68,15 @@ class Orders(ViewSet):
         try:
             customer = Customer.objects.get(user=request.auth.user)
             order = Order.objects.get(pk=pk, customer=customer)
-            serializer = OrderSerializer(order, context={'request': request})
+            serializer = OrderSerializer(order, context={"request": request})
             return Response(serializer.data)
 
         except Order.DoesNotExist as ex:
             return Response(
-                {'message': 'The requested order does not exist, or you do not have permission to access it.'},
-                status=status.HTTP_404_NOT_FOUND
+                {
+                    "message": "The requested order does not exist, or you do not have permission to access it."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         except Exception as ex:
@@ -104,7 +104,7 @@ class Orders(ViewSet):
         """
         customer = Customer.objects.get(user=request.auth.user)
         order = Order.objects.get(pk=pk, customer=customer)
-        order.payment_type = request.data["payment_type"]
+        order.payment_type = Payment.objects.get(pk=request.data["payment_type"])
         order.save()
 
         return Response({}, status=status.HTTP_204_NO_CONTENT)
@@ -142,11 +142,10 @@ class Orders(ViewSet):
         customer = Customer.objects.get(user=request.auth.user)
         orders = Order.objects.filter(customer=customer)
 
-        payment = self.request.query_params.get('payment_id', None)
+        payment = self.request.query_params.get("payment_id", None)
         if payment is not None:
             orders = orders.filter(payment__id=payment)
 
-        json_orders = OrderSerializer(
-            orders, many=True, context={'request': request})
+        json_orders = OrderSerializer(orders, many=True, context={"request": request})
 
         return Response(json_orders.data)
