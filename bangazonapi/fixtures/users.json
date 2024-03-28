@@ -70,5 +70,23 @@
             "groups": [],
             "user_permissions": []
         }
+    },
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$720000$MbI9Bir0qe0AJzlrYwxzuk$RNi7UMmL2Wsa9ztlwSq3NbD7jjMu78iZTvdR/FPOi5o=",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "hewson",
+            "first_name": "Hewson",
+            "last_name": "Schulz",
+            "email": "hewson@bruh.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2024-03-20 14:51:48.054549+00:00",
+            "groups": [],
+            "user_permissions": []
+        }
     }
 ]
