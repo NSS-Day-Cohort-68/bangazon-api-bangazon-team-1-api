@@ -32,10 +32,10 @@ class Cart(ViewSet):
             open_order.customer = current_user
             open_order.save()
 
-        line_item = OrderProduct()
-        line_item.product = Product.objects.get(pk=request.data["product_id"])
-        line_item.order = open_order
-        line_item.save()
+        lineitem = OrderProduct()
+        lineitem.product = Product.objects.get(pk=request.data["product_id"])
+        lineitem.order = open_order
+        lineitem.save()
 
         return Response({}, status=status.HTTP_204_NO_CONTENT)
 
@@ -54,11 +54,11 @@ class Cart(ViewSet):
         open_order = Order.objects.get(
             customer=current_user, payment_type=None)
 
-        line_item = OrderProduct.objects.filter(
+        lineitem = OrderProduct.objects.filter(
             product__id=pk,
             order=open_order
         )[0]
-        line_item.delete()
+        lineitem.delete()
 
         return Response({}, status=status.HTTP_204_NO_CONTENT)
 
@@ -75,9 +75,9 @@ class Cart(ViewSet):
         @apiSuccess (200) {Object} payment_type Payment id use to complete order
         @apiSuccess (200) {String} customer URI for customer
         @apiSuccess (200) {Number} size Number of items in cart
-        @apiSuccess (200) {Object[]} line_items Line items in cart
-        @apiSuccess (200) {Number} line_items.id Line item id
-        @apiSuccess (200) {Object} line_items.product Product in cart
+        @apiSuccess (200) {Object[]} lineitems Line items in cart
+        @apiSuccess (200) {Number} lineitems.id Line item id
+        @apiSuccess (200) {Object} lineitems.product Product in cart
         @apiSuccessExample {json} Success
             {
                 "id": 2,
