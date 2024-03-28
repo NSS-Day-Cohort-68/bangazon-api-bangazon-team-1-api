@@ -91,7 +91,6 @@ class Profile(ViewSet):
             serializer = ProfileSerializer(
                 current_user, many=False, context={"request": request}
             )
-
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -117,6 +116,7 @@ class Profile(ViewSet):
             @apiError (404) {String} message  Not found message.
             """
             try:
+
                 open_order = Order.objects.get(customer=current_user, payment_type=None)
                 line_items = OrderProduct.objects.filter(order=open_order)
                 line_items.delete()
@@ -188,15 +188,16 @@ class Profile(ViewSet):
                 )
 
                 cart = {}
-                cart["order"] = OrderSerializer(open_order, many=False, context={
-                                                'request': request}).data
+                cart["order"] = OrderSerializer(
+                    open_order, many=False, context={"request": request}
+                ).data
+                cart["order"]["line_items"] = line_items.data
                 cart["order"]["size"] = len(line_items.data)
 
             except Order.DoesNotExist as ex:
                 return Response(
                     {"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND
                 )
-
             return Response(cart["order"])
 
         if request.method == "POST":
@@ -242,16 +243,25 @@ class Profile(ViewSet):
 
             try:
                 open_order = Order.objects.get(customer=current_user)
-                print(open_order)
-            except Order.DoesNotExist as ex:
-                open_order = Order()
-                open_order.created_date = datetime.datetime.now()
-                open_order.customer = current_user
-                open_order.save()
+            except Order.DoesNotExist:
+                open_order = Order.objects.create(
+                    customer=current_user, created_date=datetime.datetime.now()
+                )
 
-            line_item = OrderProduct()
-            line_item.product = Product.objects.get(pk=request.data["product_id"])
-            line_item.order = open_order
+            try:
+                product_id = request.data.get("product_id")
+                if product_id is None:
+                    raise KeyError("Product ID is required in the request body")
+                product = Product.objects.get(pk=product_id)
+            except KeyError as e:
+                return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Product.DoesNotExist:
+                return Response(
+                    {"message": "Product not found with the provided ID"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            line_item = OrderProduct(product=product, order=open_order)
             line_item.save()
 
             line_item_json = LineItemSerializer(
@@ -406,6 +416,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "payment_types",
             "recommends",
         )
+
         depth = 1
 
 
