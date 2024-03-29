@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from bangazonapi.models.recommendation import Recommendation
 import base64
 from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -104,6 +105,8 @@ class Products(ViewSet):
         new_product.quantity = request.data["quantity"]
         new_product.location = request.data["location"]
 
+
+
         customer = Customer.objects.get(user=request.auth.user)
         new_product.customer = customer
 
@@ -119,6 +122,10 @@ class Products(ViewSet):
             )
 
             new_product.image_path = data
+        try:
+            new_product.full_clean()
+        except ValidationError as e:
+            return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)   
 
         new_product.save()
 
