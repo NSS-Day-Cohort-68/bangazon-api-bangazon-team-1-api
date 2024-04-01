@@ -105,8 +105,6 @@ class Products(ViewSet):
         new_product.quantity = request.data["quantity"]
         new_product.location = request.data["location"]
 
-
-
         customer = Customer.objects.get(user=request.auth.user)
         new_product.customer = customer
 
@@ -125,7 +123,7 @@ class Products(ViewSet):
         try:
             new_product.full_clean()
         except ValidationError as e:
-            return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)   
+            return Response({"error": e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
         new_product.save()
 
@@ -275,6 +273,10 @@ class Products(ViewSet):
         direction = self.request.query_params.get("direction", None)
         number_sold = self.request.query_params.get("number_sold", None)
         min_price = self.request.query_params.get("min_price", None)
+        location = self.request.query_params.get("location", None)
+
+        if location is not None:
+            products = products.filter(location__contains=location)
 
         if order is not None:
             order_filter = order
