@@ -442,31 +442,6 @@ class RecommenderSerializer(serializers.ModelSerializer):
         )
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    """JSON serializer for customer profile
-
-    Arguments:
-        serializers
-    """
-
-    user = UserSerializer(many=False)
-    recommends = RecommenderSerializer(many=True)
-
-    class Meta:
-        model = Customer
-        fields = (
-            "id",
-            "url",
-            "user",
-            "phone_number",
-            "address",
-            "payment_types",
-            "recommends",
-        )
-
-        depth = 1
-
-
 class FavoriteUserSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for favorite sellers user
 
@@ -512,3 +487,30 @@ class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
         model = Favorite
         fields = ("id", "seller")
         depth = 2
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """JSON serializer for customer profile
+
+    Arguments:
+        serializers
+    """
+
+    user = UserSerializer(many=False)
+    recommends = RecommenderSerializer(many=True)
+    favorites = FavoriteSerializer(many=True)
+
+    class Meta:
+        model = Customer
+        fields = (
+            "id",
+            "url",
+            "user",
+            "phone_number",
+            "address",
+            "payment_types",
+            "recommends",
+            "favorites",
+        )
+
+        depth = 1
