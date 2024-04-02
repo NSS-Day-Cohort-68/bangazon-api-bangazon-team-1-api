@@ -8,5 +8,5 @@ from safedelete.models import SOFT_DELETE
 
 class Favorite(models.Model):
 
-    customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING,)
+    customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING, related_name='favorites')
     seller = models.ForeignKey(Customer, on_delete=models.DO_NOTHING, related_name='favorited_seller')
