@@ -274,6 +274,7 @@ class Products(ViewSet):
         number_sold = self.request.query_params.get("number_sold", None)
         min_price = self.request.query_params.get("min_price", None)
         location = self.request.query_params.get("location", None)
+        like = self.request.query_params.get("like", None)
 
         if location is not None:
             products = products.filter(location__contains=location)
