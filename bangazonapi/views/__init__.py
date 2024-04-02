@@ -1,6 +1,6 @@
 from .register import register_user
 from .register import login_user
-from .order import Orders
+from .order import Orders, order_report
 from .paymenttype import Payments
 from .product import Products
 from .cart import Cart
