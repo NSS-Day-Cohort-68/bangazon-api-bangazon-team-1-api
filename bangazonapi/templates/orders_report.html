@@ -5,7 +5,8 @@
 </head>
 <body>
     <h1>Unpaid Orders Report</h1>
-    <table border="1">
+
+    <!-- <table border="1">
         <tr>
             <th>Order Id</th>
             <th>Customer Name</th>
@@ -14,10 +15,10 @@
         {% for order in orders %}
         <tr>
             <td>{{ order.id }}</td>
-            <td>{{ order.customer.name }}</td> 
+            <td>{{ order.customer.user.first_name }} {{ order.customer.user.last_name }}</td>
             <td>${{ order.total_cost }}</td>
         </tr>
         {% endfor %}
-    </table>
+    </table> -->
 </body>
 </html>

@@ -154,11 +154,13 @@ class Orders(ViewSet):
     
 def order_report(request):
     if request.GET.get('status') == 'incomplete':
-        orders = Order.objects.filter(payment_type__isnull=True).select_related('customer')
+        orders = Order.objects.filter(payment_type__isnull=True).select_related('customer__user')
+        for order in orders:
+            order.total_cost = sum([item.product.price for item in order.order_products.all()])
         context = {
             'orders': orders,
-        }   
-
+        }
+        print (context)
         return render(request, 'orders_report.html', context)
 
     return render(request, 'orders_report.html', {'orders': []})
