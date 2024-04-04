@@ -349,6 +349,8 @@ class Products(ViewSet):
         ).first()
 
         try:
+            if (rating is not None) and ((rating < 1) or (rating > 5)):
+                raise IntegrityError("Rating must be within range 1-5")
 
             if existing_rating:
                 # update existing rating
@@ -365,4 +367,4 @@ class Products(ViewSet):
         except IntegrityError as ex:
             return Response({"message": ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
