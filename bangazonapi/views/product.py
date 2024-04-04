@@ -343,7 +343,7 @@ class Products(ViewSet):
             rating = request.data.get("score")
         review = request.data.get("review", "")
 
-        # Check if the customer has already rated this product
+        # check if customer has already rated this product
         existing_rating = ProductRating.objects.filter(
             product=product, customer=customer
         ).first()
@@ -351,13 +351,13 @@ class Products(ViewSet):
         try:
 
             if existing_rating:
-                # Update the existing rating
+                # update existing rating
                 existing_rating.rating = rating
                 existing_rating.review = review
                 existing_rating.save()
                 serializer = RatingSerializer(existing_rating)
             else:
-                # Create a new rating
+                # create new rating
                 new_rating = ProductRating.objects.create(
                     product=product, customer=customer, rating=rating, review=review
                 )
