@@ -154,13 +154,14 @@ class Orders(ViewSet):
 
 def order_report(request):
     if request.GET.get("status") == "incomplete":
+        # incomplete order calculation
         orders = Order.objects.filter(payment_type__isnull=True).select_related(
             "customer__user"
         )
         order_data = []
         for order in orders:
             total_cost = round(
-                sum([item.product.price for item in order.lineitems.all()]), 2
+                sum(item.product.price for item in order.lineitems.all()), 2
             )
             customer_name = (
                 f"{order.customer.user.first_name} {order.customer.user.last_name}"
@@ -175,6 +176,26 @@ def order_report(request):
         context = {
             "orders": order_data,
         }
-        return render(request, "orders_report.html", context)
+        return render(request, "incomplete_orders.html", context)
 
-    return render(request, "orders_report.html", {"orders": []})
+    # completed order calculation
+    orders = Order.objects.filter(payment_type__isnull=False).select_related(
+        "customer__user"
+    )
+    order_data = []
+    for order in orders:
+        total_cost = round(sum(item.product.price for item in order.lineitems.all()), 2)
+        customer_name = (
+            f"{order.customer.user.first_name} {order.customer.user.last_name}"
+        )
+        payment_type = order.payment_type.merchant_name
+
+        order_data.append(
+            {
+                "id": order.id,
+                "customer_name": customer_name,
+                "total_cost": total_cost,
+                "payment_type": payment_type,
+            }
+        )
+    return render(request, "complete_orders.html", {"orders": order_data})
