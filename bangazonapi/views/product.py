@@ -17,8 +17,16 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
 
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductRating
+        fields = ("id", "customer", "product", "rating", "review")
+
+
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
+
+    ratings = RatingSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -33,15 +41,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "location",
             "image_path",
             "average_rating",
-            "can_be_rated",
+            "ratings",
         )
         depth = 1
-
-
-class RatingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductRating
-        fields = ("id", "customer", "product", "rating", "review")
 
 
 class Products(ViewSet):
