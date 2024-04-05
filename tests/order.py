@@ -162,4 +162,3 @@ class OrderTests(APITestCase):
         json_response = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["lineitems"]), 1)
-

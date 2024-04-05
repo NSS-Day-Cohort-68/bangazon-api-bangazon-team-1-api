@@ -40,7 +40,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRating
-        fields = ("id", "customer", "product", "rating")
+        fields = ("id", "customer", "product", "rating", "review")
 
 
 class Products(ViewSet):
