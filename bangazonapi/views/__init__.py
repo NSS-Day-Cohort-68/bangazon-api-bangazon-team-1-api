@@ -10,3 +10,4 @@ from .lineitem import LineItems
 from .customer import Customers
 from .user import Users
 from .product import expensive_products
+from .store import Stores
