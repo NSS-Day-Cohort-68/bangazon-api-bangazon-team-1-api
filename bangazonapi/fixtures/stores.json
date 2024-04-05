@@ -30,7 +30,7 @@
     "model": "bangazonapi.store",
     "pk": 4,
     "fields": {
-      "customer_id": 8,
+      "customer_id": 5,
       "name": "Fitness Zone",
       "description": "Get fit and stay healthy with our range of fitness equipment, supplements, and workout gear."
     }
