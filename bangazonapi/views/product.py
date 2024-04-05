@@ -10,7 +10,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, Productlike
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -34,6 +34,13 @@ class ProductSerializer(serializers.ModelSerializer):
             "can_be_rated",
         )
         depth = 1
+
+class ProductLikeSerializer(serializers.ModelSerializer):
+    """Serializer for ProductLike model"""
+
+    class Meta:
+        model = Productlike
+        fields = ('id', 'user', 'product')
 
 
 class Products(ViewSet):
