@@ -2,6 +2,7 @@
 
 import datetime
 from django.http import HttpResponseServerError
+from django.shortcuts import render
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
@@ -149,3 +150,31 @@ class Orders(ViewSet):
         json_orders = OrderSerializer(orders, many=True, context={"request": request})
 
         return Response(json_orders.data)
+
+
+def order_report(request):
+    if request.GET.get("status") == "incomplete":
+        orders = Order.objects.filter(payment_type__isnull=True).select_related(
+            "customer__user"
+        )
+        order_data = []
+        for order in orders:
+            total_cost = round(
+                sum([item.product.price for item in order.lineitems.all()]), 2
+            )
+            customer_name = (
+                f"{order.customer.user.first_name} {order.customer.user.last_name}"
+            )
+            order_data.append(
+                {
+                    "id": order.id,
+                    "customer_name": customer_name,
+                    "total_cost": total_cost,
+                }
+            )
+        context = {
+            "orders": order_data,
+        }
+        return render(request, "orders_report.html", context)
+
+    return render(request, "orders_report.html", {"orders": []})

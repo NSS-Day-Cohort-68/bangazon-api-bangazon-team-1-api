@@ -1,0 +1,38 @@
+[
+  {
+    "model": "bangazonapi.store",
+    "pk": 1,
+    "fields": {
+      "user": 5,
+      "store_name": "Tech Emporium",
+      "store_desc": "Your one-stop shop for all things tech! Find the latest gadgets, accessories, and more."
+    }
+  },
+  {
+    "model": "bangazonapi.store",
+    "pk": 2,
+    "fields": {
+      "user": 6,
+      "store_name": "Fashion Haven",
+      "store_desc": "Discover the trendiest clothing, shoes, and accessories here. Stay stylish all year round!"
+    }
+  },
+  {
+    "model": "bangazonapi.store",
+    "pk": 3,
+    "fields": {
+      "user": 7,
+      "store_name": "Home Essentials",
+      "store_desc": "Transform your living space with our selection of home decor, furniture, and household essentials."
+    }
+  },
+  {
+    "model": "bangazonapi.store",
+    "pk": 4,
+    "fields": {
+      "user": 8,
+      "store_name": "Fitness Zone",
+      "store_desc": "Get fit and stay healthy with our range of fitness equipment, supplements, and workout gear."
+    }
+  }
+]
