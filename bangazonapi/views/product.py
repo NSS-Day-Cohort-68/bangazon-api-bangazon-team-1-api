@@ -1,6 +1,7 @@
 """View module for handling requests about products"""
 
 from rest_framework.decorators import action
+from bangazonapi.models.productlike import Productlike
 from bangazonapi.models.recommendation import Recommendation
 import base64
 from django.core.files.base import ContentFile
@@ -10,10 +11,9 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, Productlike
+from bangazonapi.models import Product, Customer, ProductCategory
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
-
 
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
@@ -34,14 +34,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "can_be_rated",
         )
         depth = 1
-
-class ProductLikeSerializer(serializers.ModelSerializer):
-    """Serializer for ProductLike model"""
-
-    class Meta:
-        model = Productlike
-        fields = ('id', 'user', 'product')
-
 
 class Products(ViewSet):
     """Request handlers for Products in the Bangazon Platform"""
@@ -281,7 +273,6 @@ class Products(ViewSet):
         number_sold = self.request.query_params.get("number_sold", None)
         min_price = self.request.query_params.get("min_price", None)
         location = self.request.query_params.get("location", None)
-        like = self.request.query_params.get("like", None)
 
         if location is not None:
             products = products.filter(location__contains=location)
@@ -333,3 +324,17 @@ class Products(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    @action(detail=False, methods=['get'])
+    def liked(self, request):
+        """
+        GET operation to retrieve all products liked by the current user.
+        """
+        try:
+            # Retrieve all products liked by the current user
+            liked_products = Productlike.objects.filter(user=request.user)
+            # Serialize the liked products
+            serializer = ProductSerializer([product_like.product for product_like in liked_products], many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

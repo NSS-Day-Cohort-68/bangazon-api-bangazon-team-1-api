@@ -17,7 +17,7 @@ router.register(r'orders', Orders, 'order')
 router.register(r'cart', Cart, 'cart')
 router.register(r'paymenttypes', Payments, 'payment')
 router.register(r'profile', Profile, 'profile')
-
+router.register(r'products/liked',ProductLikes, 'productlike')
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
@@ -27,4 +27,7 @@ urlpatterns = [
     path('login', login_user),
     path('api-token-auth', obtain_auth_token),
     path('api-auth', include('rest_framework.urls', namespace='rest_framework')),
+    path('products/<int:product_id>/like', ProductLikes.as_view({'post': 'create', 'delete': 'destroy'})),
+
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
