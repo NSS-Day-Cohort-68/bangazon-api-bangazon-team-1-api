@@ -357,7 +357,8 @@ class Products(ViewSet):
                     )
             except Customer.DoesNotExist:
                 return Response(
-                    {"message": "This user doesn't exist"}, status=status.HTTP_404_NOT_FOUND
+                    {"message": "This user doesn't exist"},
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
             recommender = Customer.objects.get(user=request.auth.user)
@@ -376,7 +377,9 @@ class Products(ViewSet):
 
             if not created:
                 return Response(
-                    {"message": "You have already recommended this product to that user"},
+                    {
+                        "message": "You have already recommended this product to that user"
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -457,14 +460,17 @@ def expensive_products(request):
     context = {"products": product_data}
     return render(request, "expensiveproducts.html", context)
 
+
 def inexpensive_products(request):
-    inexpensive_products = Product.objects.filter(price__lte=999)
-    product_data = [{
-        "id": product.id,
-        "name": product.name,
-        "price": product.price,
-    } for product in inexpensive_products]
-        
+    products = Product.objects.filter(price__lte=999)
+    product_data = [
+        {
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+        }
+        for product in products
+    ]
+
     context = {"products": product_data}
     return render(request, "inexpensiveproducts.html", context)
-
