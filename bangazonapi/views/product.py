@@ -7,16 +7,25 @@ import base64
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseServerError
+from django.db import IntegrityError
+from django.shortcuts import render
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, ProductRating
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductRating
+        fields = ("id", "customer", "product", "rating", "review")
+
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
+
+    ratings = RatingSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -31,7 +40,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "location",
             "image_path",
             "average_rating",
-            "can_be_rated",
+            "ratings",
         )
         depth = 1
 
@@ -338,3 +347,53 @@ class Products(ViewSet):
             return Response(serializer.data)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(methods=["post"], detail=True)
+    def rate_product(self, request, pk=None):
+        """Rate a product"""
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.auth.user)
+        rating = request.data.get("rating")
+        if not rating:
+            rating = request.data.get("score")
+        review = request.data.get("review", "")
+
+        # check if customer has already rated this product
+        existing_rating = ProductRating.objects.filter(
+            product=product, customer=customer
+        ).first()
+
+        try:
+            if (rating is not None) and ((rating < 1) or (rating > 5)):
+                raise IntegrityError("Rating must be within range 1-5")
+
+            if existing_rating:
+                # update existing rating
+                existing_rating.rating = rating
+                existing_rating.review = review
+                existing_rating.save()
+                serializer = RatingSerializer(existing_rating)
+            else:
+                # create new rating
+                new_rating = ProductRating.objects.create(
+                    product=product, customer=customer, rating=rating, review=review
+                )
+                serializer = RatingSerializer(new_rating)
+        except IntegrityError as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+def expensive_products(request):
+    expensive_products = Product.objects.filter(price__gte=1000)
+    product_data = [{
+        "id": product.id,
+        "name": product.name,
+        "price": product.price,
+    } for product in expensive_products]
+        
+    context = {"products": product_data}
+    return render(request, "expensiveproducts.html", context)
+
+
