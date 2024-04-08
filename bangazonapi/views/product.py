@@ -357,7 +357,7 @@ class Products(ViewSet):
                     )
             except Customer.DoesNotExist:
                 return Response(
-                    {"message": "Customer not found"}, status=status.HTTP_404_NOT_FOUND
+                    {"message": "This user doesn't exist"}, status=status.HTTP_404_NOT_FOUND
                 )
 
             recommender = Customer.objects.get(user=request.auth.user)
@@ -376,7 +376,7 @@ class Products(ViewSet):
 
             if not created:
                 return Response(
-                    {"message": "Recommendation already exists"},
+                    {"message": "You have already recommended this product to that user"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
