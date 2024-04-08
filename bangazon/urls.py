@@ -6,7 +6,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from bangazonapi.models import *
 from bangazonapi.views import *
 
-
+# pylint: disable=invalid-name
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'products', Products, 'product')
 router.register(r'productcategories', ProductCategories, 'productcategory')
