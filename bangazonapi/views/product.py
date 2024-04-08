@@ -326,9 +326,32 @@ class Products(ViewSet):
         """Recommend products to other users"""
 
         if request.method == "POST":
+            recipient = request.data.get("recipient")
+            username = request.data.get("username")
+
+            try:
+                # get customer by id
+                if recipient:
+                    customer = Customer.objects.get(user__id=recipient)
+                # get customer by username
+                elif username:
+                    customer = Customer.objects.get(user__username=username)
+                else:
+                    return Response(
+                        {
+                            "message": "Either 'recipient' or 'username' must be provided"
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            except Customer.DoesNotExist:
+                return Response(
+                    {"message": "Customer not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
             rec = Recommendation()
             rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
+            rec.customer = customer
             rec.product = Product.objects.get(pk=pk)
 
             rec.save()
