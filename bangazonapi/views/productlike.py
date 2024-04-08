@@ -7,8 +7,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 from .product import ProductSerializer
 from bangazonapi.models import Product
-
-
+from django.db import IntegrityError
 
 class ProductLikeSerializer(serializers.ModelSerializer):
     """Serializer for ProductLike model"""
@@ -27,15 +26,18 @@ class ProductLikes(ViewSet):
         POST operation to like a product.
         """
         try:
-            product_like, created = Productlike.objects.get_or_create(product_id=product_id, user=request.user)
+            product = Product.objects.get(pk=product_id)
+            product_like, created = Productlike.objects.get_or_create(product=product, user=request.user)
             if created:
                 product_like.save()
                 serializer = ProductLikeSerializer(product_like)
                 return Response(serializer.data)
             else:
                 return Response({'message': 'Product is already liked.'}, status=status.HTTP_400_BAD_REQUEST)
-        except Productlike.DoesNotExist:
-            return Response({'message': 'Productlike does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        except Product.DoesNotExist:
+            return Response({'message': 'Product does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError:
+            return Response({'message': 'Integrity error. Unable to create like.'}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, product_id=None):
         """
@@ -47,4 +49,3 @@ class ProductLikes(ViewSet):
             return Response({'message': 'Productlike deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         except Productlike.DoesNotExist:
             return Response({'message': 'Productlike does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-    
