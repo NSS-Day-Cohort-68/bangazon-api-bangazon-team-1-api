@@ -13,7 +13,13 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, ProductRating
+from bangazonapi.models import (
+    Product,
+    Customer,
+    ProductCategory,
+    ProductRating,
+    Recommendation,
+)
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -45,6 +51,12 @@ class ProductSerializer(serializers.ModelSerializer):
             "ratings",
         )
         depth = 1
+
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recommendation
+        fields = ("id", "customer", "product", "recommender")
 
 
 class Products(ViewSet):
@@ -339,14 +351,13 @@ class Products(ViewSet):
                 else:
                     return Response(
                         {
-                            "message": "Either 'recipient' or 'username' must be provided"
+                            "message": 'Either "recipient" or "username" must be provided'
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
             except Customer.DoesNotExist:
                 return Response(
-                    {"message": "Customer not found"},
-                    status=status.HTTP_404_NOT_FOUND,
+                    {"message": "Customer not found"}, status=status.HTTP_404_NOT_FOUND
                 )
 
             rec = Recommendation()
@@ -356,7 +367,9 @@ class Products(ViewSet):
 
             rec.save()
 
-            return Response(None, status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                RecommendationSerializer(rec).data, status=status.HTTP_201_CREATED
+            )
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
