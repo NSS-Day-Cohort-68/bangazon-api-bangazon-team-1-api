@@ -361,6 +361,13 @@ class Products(ViewSet):
                 )
 
             recommender = Customer.objects.get(user=request.auth.user)
+
+            if recommender == customer:
+                return Response(
+                    {"message": "You cannot recommend a product to yourself"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             product = Product.objects.get(pk=pk)
 
             rec, created = Recommendation.objects.get_or_create(
