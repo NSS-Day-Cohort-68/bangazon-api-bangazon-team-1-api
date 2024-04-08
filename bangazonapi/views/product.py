@@ -456,3 +456,15 @@ def expensive_products(request):
 
     context = {"products": product_data}
     return render(request, "expensiveproducts.html", context)
+
+def inexpensive_products(request):
+    inexpensive_products = Product.objects.filter(price__lte=999)
+    product_data = [{
+        "id": product.id,
+        "name": product.name,
+        "price": product.price,
+    } for product in inexpensive_products]
+        
+    context = {"products": product_data}
+    return render(request, "inexpensiveproducts.html", context)
+
