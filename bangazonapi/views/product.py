@@ -1,6 +1,7 @@
 """View module for handling requests about products"""
 
 from rest_framework.decorators import action
+from bangazonapi.models.productlike import Productlike
 from bangazonapi.models.recommendation import Recommendation
 import base64
 from django.core.files.base import ContentFile
@@ -44,7 +45,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "ratings",
         )
         depth = 1
-
 
 class Products(ViewSet):
     """Request handlers for Products in the Bangazon Platform"""
@@ -371,6 +371,19 @@ class Products(ViewSet):
             return Response({"message": ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    @action(detail=False, methods=['get'])
+    def liked(self, request):
+        """
+        GET operation to retrieve all products liked by the current user.
+        """
+        try:
+            # Retrieve all products liked by the current user
+            liked_products = Productlike.objects.filter(user=request.user)
+            # Serialize the liked products
+            serializer = ProductSerializer([product_like.product for product_like in liked_products], many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def expensive_products(request):
