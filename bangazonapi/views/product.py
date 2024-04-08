@@ -360,10 +360,18 @@ class Products(ViewSet):
                     {"message": "Customer not found"}, status=status.HTTP_404_NOT_FOUND
                 )
 
-            rec = Recommendation()
-            rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = customer
-            rec.product = Product.objects.get(pk=pk)
+            recommender = Customer.objects.get(user=request.auth.user)
+            product = Product.objects.get(pk=pk)
+
+            rec, created = Recommendation.objects.get_or_create(
+                recommender=recommender, customer=customer, product=product
+            )
+
+            if not created:
+                return Response(
+                    {"message": "Recommendation already exists"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             rec.save()
 
