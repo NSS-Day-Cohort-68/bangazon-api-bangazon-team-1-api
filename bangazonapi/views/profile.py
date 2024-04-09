@@ -13,6 +13,7 @@ from bangazonapi.models import OrderProduct, Favorite
 from bangazonapi.models import Recommendation
 from .product import ProductSerializer
 from .order import OrderSerializer
+from django.shortcuts import render
 
 
 class Profile(ViewSet):
@@ -374,6 +375,23 @@ class Profile(ViewSet):
                 )
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+def favoritesellers_report(request):
+
+    customer_id = request.GET.get("customer")
+
+    if customer_id is not None:
+        customer = Customer.objects.get(id=customer_id)
+
+        favorite_sellers = Favorite.objects.filter(customer_id=customer_id)
+
+        seller_ids = [favorite.seller_id for favorite in favorite_sellers]
+        sellers = User.objects.filter(id__in=seller_ids)
+        serialized_sellers = FavoriteUserSerializer(sellers, many=True)
+
+        context = {"customer": customer, "favorite_sellers": serialized_sellers.data}
+        return render(request, "favoritesellers.html", context)
 
 
 class LineItemSerializer(serializers.HyperlinkedModelSerializer):
