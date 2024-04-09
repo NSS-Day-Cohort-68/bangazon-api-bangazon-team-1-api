@@ -502,7 +502,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
 
     user = UserSerializer(many=False)
-    recommended_by = RecommenderSerializer(many=True, source='recommends')
+    recommended_by = RecommenderSerializer(many=True, source="recommends")
     favorites = ProfileFavoriteSerializer(many=True)
 
     class Meta:
