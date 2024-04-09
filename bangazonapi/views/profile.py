@@ -433,6 +433,20 @@ class RecommenderSerializer(serializers.ModelSerializer):
         )
 
 
+class RecommendationSerializer(serializers.ModelSerializer):
+    """JSON serializer for recommendations"""
+
+    product = ProfileProductSerializer()
+    recommender = CustomerSerializer()
+
+    class Meta:
+        model = Recommendation
+        fields = (
+            "product",
+            "recommender",
+        )
+
+
 class FavoriteUserSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for favorite sellers user
 
@@ -504,6 +518,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(many=False)
     recommended_by = RecommenderSerializer(many=True, source="recommends")
     favorites = ProfileFavoriteSerializer(many=True)
+    recommendations = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -516,6 +531,15 @@ class ProfileSerializer(serializers.ModelSerializer):
             "payment_types",
             "recommended_by",
             "favorites",
+            "recommendations",
         )
 
         depth = 1
+
+    def get_recommendations(self, obj):
+        """
+        Get all recommendations that were recommended to the current user.
+        """
+        recommendations = Recommendation.objects.filter(customer=obj)
+        serializer = RecommendationSerializer(recommendations, many=True)
+        return serializer.data
