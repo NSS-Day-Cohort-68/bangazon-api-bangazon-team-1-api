@@ -2,7 +2,7 @@
 
 import datetime
 from django.http import HttpResponseServerError
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -11,8 +11,10 @@ from rest_framework.viewsets import ViewSet
 from bangazonapi.models import Order, Customer, Product
 from bangazonapi.models import OrderProduct, Favorite
 from bangazonapi.models import Recommendation
-from .product import ProductSerializer
+from .product import ProfileProductSerializer
 from .order import OrderSerializer
+
+User = get_user_model()
 
 
 class Profile(ViewSet):
@@ -383,7 +385,7 @@ class LineItemSerializer(serializers.HyperlinkedModelSerializer):
         serializers
     """
 
-    product = ProductSerializer(many=False)
+    product = ProfileProductSerializer(many=False)
 
     class Meta:
         model = OrderProduct
@@ -414,17 +416,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user",
-        )
-
-
-class ProfileProductSerializer(serializers.ModelSerializer):
-    """JSON serializer for products"""
-
-    class Meta:
-        model = Product
-        fields = (
-            "id",
-            "name",
         )
 
 
@@ -511,7 +502,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
 
     user = UserSerializer(many=False)
-    recommends = RecommenderSerializer(many=True)
+    recommended_by = RecommenderSerializer(many=True, source='recommends')
     favorites = ProfileFavoriteSerializer(many=True)
 
     class Meta:
@@ -523,7 +514,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "phone_number",
             "address",
             "payment_types",
-            "recommends",
+            "recommended_by",
             "favorites",
         )
 
