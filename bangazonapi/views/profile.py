@@ -2,7 +2,7 @@
 
 import datetime
 from django.http import HttpResponseServerError
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -11,10 +11,29 @@ from rest_framework.viewsets import ViewSet
 from bangazonapi.models import Order, Customer, Product
 from bangazonapi.models import OrderProduct, Favorite
 from bangazonapi.models import Recommendation
-from .product import ProductSerializer
+from .product import ProfileProductSerializer
 from .order import OrderSerializer
 from django.shortcuts import render
 from django.http import JsonResponse
+
+User = get_user_model()
+
+
+def get_unique_recs(data, key="customer"):
+    unique_products = {}
+
+    for item in data:
+        product = item["product"]
+        given_key = item[key]
+
+        if product["id"] not in unique_products:
+            unique_products[product["id"]] = {"product": product, (key + "s"): []}
+
+        unique_products[product["id"]][(key + "s")].append(given_key)
+
+    out = list(unique_products.values())
+    return out
+
 
 class Profile(ViewSet):
     """Request handlers for user profile info in the Bangazon Platform"""
@@ -397,8 +416,9 @@ def favoritesellers_report(request):
             }
             return render(request, "favoritesellers.html", context)
         except Customer.DoesNotExist:
-            return JsonResponse({"error": "Customer does not exist"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return JsonResponse(
+                {"error": "Customer does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class LineItemSerializer(serializers.HyperlinkedModelSerializer):
@@ -408,7 +428,7 @@ class LineItemSerializer(serializers.HyperlinkedModelSerializer):
         serializers
     """
 
-    product = ProductSerializer(many=False)
+    product = ProfileProductSerializer(many=False)
 
     class Meta:
         model = OrderProduct
@@ -442,17 +462,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         )
 
 
-class ProfileProductSerializer(serializers.ModelSerializer):
-    """JSON serializer for products"""
-
-    class Meta:
-        model = Product
-        fields = (
-            "id",
-            "name",
-        )
-
-
 class RecommenderSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
 
@@ -464,6 +473,20 @@ class RecommenderSerializer(serializers.ModelSerializer):
         fields = (
             "product",
             "customer",
+        )
+
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    """JSON serializer for recommendations"""
+
+    product = ProfileProductSerializer()
+    recommender = CustomerSerializer()
+
+    class Meta:
+        model = Recommendation
+        fields = (
+            "product",
+            "recommender",
         )
 
 
@@ -536,8 +559,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
 
     user = UserSerializer(many=False)
-    recommends = RecommenderSerializer(many=True)
     favorites = ProfileFavoriteSerializer(many=True)
+    recommended_by = serializers.SerializerMethodField()
+    recommendations = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -548,8 +572,21 @@ class ProfileSerializer(serializers.ModelSerializer):
             "phone_number",
             "address",
             "payment_types",
-            "recommends",
+            "recommended_by",
             "favorites",
+            "recommendations",
         )
 
         depth = 1
+
+    def get_recommended_by(self, obj):
+        recs = Recommendation.objects.filter(recommender=obj)
+        serializer = RecommenderSerializer(recs, many=True)
+
+        return get_unique_recs(serializer.data)
+
+    def get_recommendations(self, obj):
+        recs = Recommendation.objects.filter(customer=obj)
+        serializer = RecommendationSerializer(recs, many=True)
+
+        return get_unique_recs(serializer.data, "recommender")

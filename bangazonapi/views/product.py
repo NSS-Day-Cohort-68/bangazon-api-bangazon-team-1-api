@@ -59,6 +59,14 @@ class RecommendationSerializer(serializers.ModelSerializer):
         fields = ("id", "customer", "product", "recommender")
 
 
+class ProfileProductSerializer(serializers.ModelSerializer):
+    """JSON serializer for products"""
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "price", "description", "image_path")
+
+
 class Products(ViewSet):
     """Request handlers for Products in the Bangazon Platform"""
 
