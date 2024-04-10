@@ -537,9 +537,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         depth = 1
 
     def get_recommendations(self, obj):
-        """
-        Get all recommendations that were recommended to the current user.
-        """
-        recommendations = Recommendation.objects.filter(customer=obj)
-        serializer = RecommendationSerializer(recommendations, many=True)
+        recs = Recommendation.objects.filter(customer=obj)
+        serializer = RecommendationSerializer(recs, many=True)
         return serializer.data
