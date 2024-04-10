@@ -58,7 +58,7 @@ class PaymentTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Delete payment type
-        url = f"/paymenttypes/{json_response["id"]}"
+        url = f"/paymenttypes/{json_response['id']}"
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 

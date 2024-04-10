@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inexpensive Products</title>
+</head>
+<body>
+    <h1>Inexpensive Products</h1>
+    <table border="1">
+        <tr>
+          <th>Product Id</th>
+          <th>Product Name</th>
+          <th>Product Cost</th>
+        </tr>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.id }}</td>
+            <td>{{ product.name }}</td> 
+            <td>${{ product.price }}</td>
+        </li>
+        {% endfor %}
+    </table>
+</body>
+</html>
