@@ -19,6 +19,22 @@ from django.http import JsonResponse
 User = get_user_model()
 
 
+def get_unique_recs(data, key="customer"):
+    unique_products = {}
+
+    for item in data:
+        product = item["product"]
+        given_key = item[key]
+
+        if product["id"] not in unique_products:
+            unique_products[product["id"]] = {"product": product, (key + "s"): []}
+
+        unique_products[product["id"]][(key + "s")].append(given_key)
+
+    out = list(unique_products.values())
+    return out
+
+
 class Profile(ViewSet):
     """Request handlers for user profile info in the Bangazon Platform"""
 
@@ -543,8 +559,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
 
     user = UserSerializer(many=False)
-    recommended_by = RecommenderSerializer(many=True, source="recommends")
     favorites = ProfileFavoriteSerializer(many=True)
+    recommended_by = serializers.SerializerMethodField()
     recommendations = serializers.SerializerMethodField()
 
     class Meta:
@@ -563,7 +579,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         depth = 1
 
+    def get_recommended_by(self, obj):
+        recs = Recommendation.objects.filter(recommender=obj)
+        serializer = RecommenderSerializer(recs, many=True)
+
+        return get_unique_recs(serializer.data)
+
     def get_recommendations(self, obj):
         recs = Recommendation.objects.filter(customer=obj)
         serializer = RecommendationSerializer(recs, many=True)
-        return serializer.data
+
+        return get_unique_recs(serializer.data, "recommender")
