@@ -14,7 +14,7 @@ from bangazonapi.models import Recommendation
 from .product import ProductSerializer
 from .order import OrderSerializer
 from django.shortcuts import render
-
+from django.http import JsonResponse
 
 class Profile(ViewSet):
     """Request handlers for user profile info in the Bangazon Platform"""
@@ -397,10 +397,8 @@ def favoritesellers_report(request):
             }
             return render(request, "favoritesellers.html", context)
         except Customer.DoesNotExist:
-            return Response(
-                {"message": "Customer not found with the provided ID"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return JsonResponse({"error": "Customer does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        
 
 
 class LineItemSerializer(serializers.HyperlinkedModelSerializer):
