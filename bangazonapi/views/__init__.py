@@ -12,3 +12,4 @@ from .user import Users
 from .productlike import ProductLikes
 from .product import expensive_products
 from .store import Stores
+from .profile import favoritesellers_report

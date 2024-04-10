@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Favorite Sellers</title>
+  </head>
+  <body>
+    <h1>Favorite Sellers for {{ customer.user.first_name }} {{ customer.user.last_name }}</h1>
+    <ul>
+      {% for seller in favorite_sellers %}
+      <li>{{ seller.first_name }} {{ seller.last_name }}</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
