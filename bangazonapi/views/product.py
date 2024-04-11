@@ -19,6 +19,7 @@ from bangazonapi.models import (
     ProductCategory,
     ProductRating,
     Recommendation,
+    OrderProduct
 )
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -452,6 +453,34 @@ class Products(ViewSet):
             return Response(
                 {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(methods=["delete"], detail=True)
+    def remove_from_order(self, request, pk=None):
+        """
+        @api {DELETE} /products/:id/remove-from-order DELETE product from order
+        @apiName RemoveProductFromOrder
+        @apiGroup Product
+
+        @apiHeader {String} Authorization Auth token
+        @apiHeaderExample {String} Authorization
+            Token 9ba45f09651c5b0c404f37a2d2572c026c146611
+
+        @apiParam {id} id Product Id to remove from order
+        @apiSuccessExample {json} Success
+            HTTP/1.1 204 No Content
+        """
+        try:
+            product = Product.objects.get(pk=pk)
+
+            # Remove the product from the order
+            OrderProduct.objects.filter(product=product).delete()
+
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        except Product.DoesNotExist:
+            return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as ex:
+            return Response({"message": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 def expensive_products(request):
