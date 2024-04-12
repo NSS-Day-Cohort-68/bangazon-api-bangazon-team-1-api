@@ -19,7 +19,8 @@ from bangazonapi.models import (
     ProductCategory,
     ProductRating,
     Recommendation,
-    OrderProduct
+    OrderProduct,
+    Order
 )
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -480,8 +481,6 @@ class Products(ViewSet):
             return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as ex:
             return Response({"message": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 def expensive_products(request):
     products = Product.objects.filter(price__gte=1000)
