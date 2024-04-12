@@ -49,6 +49,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "location",
             "image_path",
             "average_rating",
+            "customer_id",
             "ratings",
         )
         depth = 1
@@ -289,6 +290,7 @@ class Products(ViewSet):
                     "location": "Pittsburgh",
                     "image_path": null,
                     "average_rating": 0,
+                    "customer_id": 5,
                     "category": {
                         "url": "http://localhost:8000/productcategories/6",
                         "name": "Games/Toys"

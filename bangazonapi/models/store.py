@@ -5,7 +5,7 @@ from .customer import Customer
 
 class Store(models.Model):
 
-    customer = models.ForeignKey(
+    seller = models.ForeignKey(
         Customer, on_delete=models.CASCADE, related_name="stores"
     )
     name = models.CharField(max_length=20)
