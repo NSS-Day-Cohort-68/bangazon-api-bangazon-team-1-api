@@ -2,7 +2,6 @@
 
 from rest_framework.decorators import action
 from bangazonapi.models.productlike import Productlike
-from bangazonapi.models.recommendation import Recommendation
 import base64
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -471,17 +470,21 @@ class Products(ViewSet):
             HTTP/1.1 204 No Content
         """
         try:
-            product = Product.objects.get(pk=pk)
 
-            # Remove the product from the order
-            OrderProduct.objects.filter(product=product).delete()
+            # Get the order product associated with the product
+            order_product = OrderProduct.objects.get(pk=pk)
+
+            # Remove the order product
+            order_product.delete()
 
             return Response({}, status=status.HTTP_204_NO_CONTENT)
         except Product.DoesNotExist:
             return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except OrderProduct.DoesNotExist:
+            return Response({"message": "Product not found in order"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as ex:
             return Response({"message": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
 def expensive_products(request):
     products = Product.objects.filter(price__gte=1000)
     product_data = [
