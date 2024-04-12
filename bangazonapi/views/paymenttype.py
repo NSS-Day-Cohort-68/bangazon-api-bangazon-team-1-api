@@ -1,4 +1,7 @@
 """View module for handling requests about customer payment types"""
+
+from datetime import datetime
+from django.db.utils import IntegrityError
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -13,14 +16,27 @@ class PaymentSerializer(serializers.HyperlinkedModelSerializer):
     Arguments:
         serializers
     """
+
+    obscured_num = serializers.SerializerMethodField()
+
     class Meta:
         model = Payment
         url = serializers.HyperlinkedIdentityField(
-            view_name='payment',
-            lookup_field='id'
+            view_name="payment", lookup_field="id"
         )
-        fields = ('id', 'url', 'merchant_name', 'account_number',
-                  'expiration_date', 'create_date')
+        fields = (
+            "id",
+            "url",
+            "merchant_name",
+            "account_number",
+            "expiration_date",
+            "create_date",
+            "obscured_num",
+        )
+
+    def get_obscured_num(self, obj):
+        account_num = obj.account_number
+        return f"{'*' * (len(account_num) - 4)}{account_num[-4:]}"
 
 
 class Payments(ViewSet):
@@ -31,19 +47,34 @@ class Payments(ViewSet):
         Returns:
             Response -- JSON serialized payment instance
         """
-        new_payment = Payment()
-        new_payment.merchant_name = request.data["merchant_name"]
-        new_payment.account_number = request.data["account_number"]
-        new_payment.expiration_date = request.data["expiration_date"]
-        new_payment.create_date = request.data["create_date"]
-        customer = Customer.objects.get(user=request.auth.user)
-        new_payment.customer = customer
-        new_payment.save()
 
-        serializer = PaymentSerializer(
-            new_payment, context={'request': request})
+        try:
+            new_payment = Payment()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            merchant_name = request.data.get("merchant_name")
+            if not merchant_name:
+                merchant_name = request.data.get("merchant")
+
+            account_number = request.data.get("account_number")
+            if not account_number:
+                account_number = request.data.get("acctNumber")
+
+            customer = Customer.objects.get(user=request.auth.user)
+
+            new_payment.merchant_name = merchant_name
+            new_payment.account_number = account_number
+            new_payment.expiration_date = request.data.get("expiration_date")
+            new_payment.create_date = request.data.get(
+                "create_date", datetime.now().date()
+            )
+            new_payment.customer = customer
+            new_payment.save()
+
+            serializer = PaymentSerializer(new_payment, context={"request": request})
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except IntegrityError as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
         """Handle GET requests for single payment type
@@ -53,8 +84,7 @@ class Payments(ViewSet):
         """
         try:
             payment_type = Payment.objects.get(pk=pk)
-            serializer = PaymentSerializer(
-                payment_type, context={'request': request})
+            serializer = PaymentSerializer(payment_type, context={"request": request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -72,15 +102,18 @@ class Payments(ViewSet):
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
         except Payment.DoesNotExist as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def list(self, request):
         """Handle GET requests to payment type resource"""
         customer = Customer.objects.get(user=request.auth.user)
         payment_types = Payment.objects.filter(customer=customer)
         serializer = PaymentSerializer(
-            payment_types, many=True, context={'request': request})
+            payment_types, many=True, context={"request": request}
+        )
         return Response(serializer.data)
