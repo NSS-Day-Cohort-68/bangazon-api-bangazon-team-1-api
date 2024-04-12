@@ -1,14 +1,13 @@
 """View module for handling requests about customer payment types"""
 
+from datetime import datetime
+from django.db.utils import IntegrityError
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
 from bangazonapi.models import Payment, Customer
-from django.db.utils import IntegrityError
-from django.core.exceptions import ValidationError
-from datetime import datetime
 
 
 class PaymentSerializer(serializers.HyperlinkedModelSerializer):
@@ -76,11 +75,6 @@ class Payments(ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except IntegrityError as ex:
             return Response({"message": ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError:
-            return Response(
-                {"message": "Payment must include a valid expiration date"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
     def retrieve(self, request, pk=None):
         """Handle GET requests for single payment type
