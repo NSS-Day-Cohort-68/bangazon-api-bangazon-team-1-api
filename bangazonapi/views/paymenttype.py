@@ -64,9 +64,7 @@ class Payments(ViewSet):
 
             new_payment.merchant_name = merchant_name
             new_payment.account_number = account_number
-            new_payment.expiration_date = request.data.get(
-                "expiration_date", "0000-00-00"
-            )
+            new_payment.expiration_date = request.data.get("expiration_date")
             new_payment.create_date = request.data.get(
                 "create_date", datetime.now().date()
             )
