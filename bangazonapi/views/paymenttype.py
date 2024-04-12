@@ -49,12 +49,6 @@ class Payments(ViewSet):
             Response -- JSON serialized payment instance
         """
 
-        """
-        {
-            "acctNumber": "1234123412341234",
-            "merchant": "Bruh"
-        }
-        """
         try:
             new_payment = Payment()
 
