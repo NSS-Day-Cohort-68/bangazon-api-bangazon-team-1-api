@@ -5,14 +5,23 @@ from rest_framework import serializers
 from rest_framework import status
 from bangazonapi.models import Store, Customer
 
+class SellerSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+
+    class Meta:
+        model = Customer
+        fields = ['id', 'first_name', 'last_name']
 
 class StoreSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for stores"""
 
+    seller = SellerSerializer()
+
     class Meta:
         model = Store
         url = serializers.HyperlinkedIdentityField(view_name="store", lookup_field="id")
-        fields = ("id", "customer_id", "name", "description")
+        fields = ("id", "seller", "name", "description")
         depth = 1
 
 
@@ -32,14 +41,14 @@ class Stores(ViewSet):
         @apiParam {String} description Description of the store.
 
         @apiSuccess {Number} id ID of the newly created store.
-        @apiSuccess {String} customer_id Customer ID associated with the store.
+        @apiSuccess {String} seller Customer ID associated with the store.
         @apiSuccess {String} name Name of the store.
         @apiSuccess {String} description Description of the store.
 
         @apiSuccessExample Success
             {
                 "id": 1,
-                "customer_id": 5,
+                "seller": 5,
                 "name": "Tech Emporium",
                 "description": "Your one-stop shop for all things tech! Find the latest gadgets, accessories, and more."
             }
@@ -49,8 +58,8 @@ class Stores(ViewSet):
             new_store.name = request.data["name"]
             new_store.description = request.data["description"]
 
-            customer = Customer.objects.get(user=request.auth.user)
-            new_store.customer = customer
+            seller = Customer.objects.get(user=request.auth.user)
+            new_store.seller = seller
 
             new_store.save()
 
@@ -75,14 +84,14 @@ class Stores(ViewSet):
 
         @apiSuccess (200) {Object} store Created store
         @apiSuccess (200) {id} store.id Store id
-        @apiSuccess (200) {int} store.owner_id
+        @apiSuccess (200) {int} store.seller
         @apiSuccess (200) {String} store.name
         @apiSuccess (200) {String} store.description
 
         @apiSuccessExample Success
             {
                 "id": 1,
-                "customer_id": 5,
+                "seller": 5,
                 "name": "Tech Emporium",
                 "description": "Your one-stop shop for all things tech! Find the latest gadgets, accessories, and more."
             }
@@ -93,3 +102,47 @@ class Stores(ViewSet):
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
+        
+    def list(self, request):
+        """
+        @api {GET} /stores GET all stores
+        @apiName GetStores
+        @apiGroup Store
+
+        @apiSuccess {Array} stores List of stores.
+
+        @apiSuccessExample Success
+            [
+                {
+                "id": 2,
+                "seller": {
+                    "id": 6,
+                    "first_name": "Jisie",
+                    "last_name": "David"
+                },
+                "name": "Fashion Haven",
+                "description": "Discover the trendiest clothing, shoes, and accessories here. Stay stylish all year round!"
+            },
+            {
+                "id": 3,
+                "seller": {
+                    "id": 7,
+                    "first_name": "Brenda",
+                    "last_name": "Long"
+                },
+                "name": "Home Essentials",
+                "description": "Transform your living space with our selection of home decor, furniture, and household essentials."
+            }
+            ]
+        """
+        
+        stores = Store.objects.all()
+        serializer = StoreSerializer(stores, many=True)
+
+        return Response(serializer.data)
+
+
+
+
+
+
