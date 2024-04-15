@@ -1,20 +1,26 @@
 """View module for handling requests about customer profiles"""
 
 import datetime
-from django.http import HttpResponseServerError
+from django.http import HttpResponseServerError, JsonResponse
 from django.contrib.auth import get_user_model
+from django.shortcuts import render
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from bangazonapi.models import Order, Customer, Product
-from bangazonapi.models import OrderProduct, Favorite
-from bangazonapi.models import Recommendation
+from bangazonapi.models import (
+    Order,
+    Customer,
+    Product,
+    Recommendation,
+    OrderProduct,
+    Favorite,
+    Store,
+)
 from .product import ProfileProductSerializer
 from .order import OrderSerializer
-from django.shortcuts import render
-from django.http import JsonResponse
+from .store import FavoriteSerializer
 
 User = get_user_model()
 
@@ -378,18 +384,34 @@ class Profile(ViewSet):
                 )
 
             try:
-                store = Customer.objects.get(id=store_id)
-                favorite = Favorite(customer=current_user, seller=store)
+                store = Store.objects.get(id=store_id)
+
+                if store.seller == current_user:
+                    return Response(
+                        {"message": "You cannot favorite your own store."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if Favorite.objects.filter(
+                    customer=current_user, seller=store.seller
+                ).exists():
+                    return Response(
+                        {"message": "You have already favorited this store."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                favorite = Favorite(customer=current_user, seller=store.seller)
                 favorite.save()
 
-                serializer = FavoriteSerializer(
-                    favorite, many=False, context={"request": request}
-                )
-
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            except Customer.DoesNotExist:
                 return Response(
-                    {"message": "Store not found with the provided ID"},
+                    FavoriteSerializer(
+                        favorite, many=False, context={"request": request}
+                    ).data,
+                    status=status.HTTP_201_CREATED,
+                )
+            except Store.DoesNotExist:
+                return Response(
+                    {"message": "Store not found with provided ID"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
@@ -522,35 +544,6 @@ class FavoriteSellerSerializer(serializers.HyperlinkedModelSerializer):
         depth = 1
 
 
-class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
-    """JSON serializer for favorites
-
-    Arguments:
-        serializers
-    """
-
-    seller = FavoriteSellerSerializer(many=False)
-
-    class Meta:
-        model = Favorite
-        fields = ("id", "seller")
-        depth = 2
-
-
-class ProfileFavoriteSerializer(serializers.ModelSerializer):
-    """JSON serializer for customer profile favorites
-
-    Arguments:
-        serializers
-    """
-
-    seller = FavoriteUserSerializer(many=False, source="seller.user")
-
-    class Meta:
-        model = Favorite
-        fields = ("id", "seller")
-
-
 class ProfileSerializer(serializers.ModelSerializer):
     """JSON serializer for customer profile
 
@@ -559,7 +552,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
 
     user = UserSerializer(many=False)
-    favorites = ProfileFavoriteSerializer(many=True)
+    favorites = FavoriteSerializer(many=True)
     recommended_by = serializers.SerializerMethodField()
     recommendations = serializers.SerializerMethodField()
 
