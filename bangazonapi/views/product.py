@@ -2,7 +2,6 @@
 
 from rest_framework.decorators import action
 from bangazonapi.models.productlike import Productlike
-from bangazonapi.models.recommendation import Recommendation
 import base64
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -19,6 +18,8 @@ from bangazonapi.models import (
     ProductCategory,
     ProductRating,
     Recommendation,
+    OrderProduct,
+    Order
 )
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -48,6 +49,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "location",
             "image_path",
             "average_rating",
+            "customer_id",
             "ratings",
         )
         depth = 1
@@ -57,6 +59,14 @@ class RecommendationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recommendation
         fields = ("id", "customer", "product", "recommender")
+
+
+class ProfileProductSerializer(serializers.ModelSerializer):
+    """JSON serializer for products"""
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "price", "description", "image_path")
 
 
 class Products(ViewSet):
@@ -280,6 +290,7 @@ class Products(ViewSet):
                     "location": "Pittsburgh",
                     "image_path": null,
                     "average_rating": 0,
+                    "customer_id": 5,
                     "category": {
                         "url": "http://localhost:8000/productcategories/6",
                         "name": "Games/Toys"
@@ -445,7 +456,37 @@ class Products(ViewSet):
                 {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(methods=["delete"], detail=True)
+    def remove_from_order(self, request, pk=None):
+        """
+        @api {DELETE} /products/:id/remove-from-order DELETE product from order
+        @apiName RemoveProductFromOrder
+        @apiGroup Product
 
+        @apiHeader {String} Authorization Auth token
+        @apiHeaderExample {String} Authorization
+            Token 9ba45f09651c5b0c404f37a2d2572c026c146611
+
+        @apiParam {id} id Product Id to remove from order
+        @apiSuccessExample {json} Success
+            HTTP/1.1 204 No Content
+        """
+        try:
+
+            # Get the order product associated with the product
+            order_product = OrderProduct.objects.get(pk=pk)
+
+            # Remove the order product
+            order_product.delete()
+
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        except Product.DoesNotExist:
+            return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except OrderProduct.DoesNotExist:
+            return Response({"message": "Product not found in order"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as ex:
+            return Response({"message": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 def expensive_products(request):
     products = Product.objects.filter(price__gte=1000)
     product_data = [

@@ -3,7 +3,7 @@
     "model": "bangazonapi.store",
     "pk": 1,
     "fields": {
-      "customer_id": 5,
+      "seller": 5,
       "name": "Tech Emporium",
       "description": "Your one-stop shop for all things tech! Find the latest gadgets, accessories, and more."
     }
@@ -12,7 +12,7 @@
     "model": "bangazonapi.store",
     "pk": 2,
     "fields": {
-      "customer_id": 6,
+      "seller": 6,
       "name": "Fashion Haven",
       "description": "Discover the trendiest clothing, shoes, and accessories here. Stay stylish all year round!"
     }
@@ -21,18 +21,9 @@
     "model": "bangazonapi.store",
     "pk": 3,
     "fields": {
-      "customer_id": 7,
+      "seller": 7,
       "name": "Home Essentials",
       "description": "Transform your living space with our selection of home decor, furniture, and household essentials."
-    }
-  },
-  {
-    "model": "bangazonapi.store",
-    "pk": 4,
-    "fields": {
-      "customer_id": 5,
-      "name": "Fitness Zone",
-      "description": "Get fit and stay healthy with our range of fitness equipment, supplements, and workout gear."
     }
   }
 ]

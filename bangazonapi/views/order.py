@@ -9,13 +9,13 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework.decorators import action
 from bangazonapi.models import Order, Payment, Customer, Product, OrderProduct
-from .product import ProductSerializer
+from .product import ProfileProductSerializer
 
 
 class OrderLineItemSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for line items"""
 
-    product = ProductSerializer(many=False)
+    product = ProfileProductSerializer(many=False)
 
     class Meta:
         model = OrderProduct
