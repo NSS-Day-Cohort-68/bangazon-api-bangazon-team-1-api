@@ -44,6 +44,14 @@ urlpatterns = [
         "reports/inexpensiveproducts", inexpensive_products, name="inexpensive_products"
     ),
     path("reports/favoritesellers", favoritesellers_report, name="favorite_sellers"),
-    path("products/<int:pk>/remove-from-order", Products.as_view({"delete": "remove_from_order"}), name="remove_from_order"),
-
+    path(
+        "products/<int:pk>/remove-from-order",
+        Products.as_view({"delete": "remove_from_order"}),
+        name="remove_from_order",
+    ),
+    path(
+        "stores/<int:pk>/favorite",
+        Stores.as_view({"post": "favorite"}),
+        name="favorite",
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

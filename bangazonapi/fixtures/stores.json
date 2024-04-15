@@ -25,14 +25,5 @@
       "name": "Home Essentials",
       "description": "Transform your living space with our selection of home decor, furniture, and household essentials."
     }
-  },
-  {
-    "model": "bangazonapi.store",
-    "pk": 4,
-    "fields": {
-      "seller": 5,
-      "name": "Fitness Zone",
-      "description": "Get fit and stay healthy with our range of fitness equipment, supplements, and workout gear."
-    }
   }
 ]

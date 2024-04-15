@@ -3,15 +3,18 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Store, Customer
+from rest_framework.decorators import action
+from bangazonapi.models import Store, Customer, Favorite
+
 
 class SellerSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
+    first_name = serializers.CharField(source="user.first_name")
+    last_name = serializers.CharField(source="user.last_name")
 
     class Meta:
         model = Customer
-        fields = ['id', 'first_name', 'last_name']
+        fields = ["id", "url", "first_name", "last_name"]
+
 
 class StoreSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for stores"""
@@ -23,6 +26,22 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
         url = serializers.HyperlinkedIdentityField(view_name="store", lookup_field="id")
         fields = ("id", "seller", "name", "description")
         depth = 1
+
+
+class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
+    """JSON serializer for favorites
+
+    Arguments:
+        serializers
+    """
+
+    seller = SellerSerializer(many=False)
+    customer = SellerSerializer(many=False)
+
+    class Meta:
+        model = Favorite
+        fields = ("id", "seller", "customer")
+        # depth = 2
 
 
 class Stores(ViewSet):
@@ -102,7 +121,7 @@ class Stores(ViewSet):
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
-        
+
     def list(self, request):
         """
         @api {GET} /stores GET all stores
@@ -135,14 +154,60 @@ class Stores(ViewSet):
             }
             ]
         """
-        
+
         stores = Store.objects.all()
-        serializer = StoreSerializer(stores, many=True)
+        serializer = StoreSerializer(stores, many=True, context={"request": request})
 
         return Response(serializer.data)
 
+    @action(methods=["post"], detail=True)
+    def favorite(self, request, pk=None):
+        """
+        @api {POST} /stores/n/favorite POST a new favorite store
+        @apiName AddFavoriteStore
+        @apiGroup Stores
 
+        @apiHeader {String} Authorization Auth token
+        @apiHeaderExample {String} Authorization
+            Token 9ba45f09651c5b0c404f37a2d2572c026c146611
 
+        @apiBody {Number} pk The ID of the store to favorite
 
+        @apiSuccessExample {json} Success
+            HTTP/1.1 201 Created
 
+        @apiError (400) {String} message Invalid input data
+        @apiError (404) {String} message Store not found
+        """
+        try:
+            current_user = Customer.objects.get(user=request.auth.user)
+            store = Store.objects.get(pk=pk)
 
+            if store.seller == current_user:
+                return Response(
+                    {"message": "You cannot favorite your own store."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if Favorite.objects.filter(
+                customer=current_user, seller=store.seller
+            ).exists():
+                return Response(
+                    {"message": "You have already favorited this store."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            favorite = Favorite(customer=current_user, seller=store.seller)
+            favorite.save()
+
+            return Response(
+                FavoriteSerializer(
+                    favorite, many=False, context={"request": request}
+                ).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except Store.DoesNotExist:
+            return Response(
+                {"message": "Store not found with provided ID"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
