@@ -28,6 +28,15 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
         depth = 1
 
 
+class FavoriteStoreSerializer(serializers.HyperlinkedModelSerializer):
+    """JSON serializer for stores"""
+
+    class Meta:
+        model = Store
+        url = serializers.HyperlinkedIdentityField(view_name="store", lookup_field="id")
+        fields = ("id", "name", "description")
+
+
 class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for favorites
 
@@ -37,11 +46,18 @@ class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
 
     seller = SellerSerializer(many=False)
     customer = SellerSerializer(many=False)
+    store = FavoriteStoreSerializer(source="seller.stores.first", many=False)
 
     class Meta:
         model = Favorite
-        fields = ("id", "seller", "customer")
-        # depth = 2
+        fields = ("id", "seller", "customer", "store")
+
+    def get_store(self, obj):
+        stores = obj.seller.stores.all()
+        serializer = FavoriteStoreSerializer(
+            stores, many=True, context={"request": self.context["request"]}
+        )
+        return serializer.data
 
 
 class Stores(ViewSet):
